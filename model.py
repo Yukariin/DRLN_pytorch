@@ -290,7 +290,7 @@ class DRLN(nn.Module):
                 try:
                     own_state[name].copy_(param)
                 except Exception:
-                    if name.find('tail') >= 0 or name.find('upsample') >= 0 or name.find('mean') >= 0 :
+                    if name.find('tail') >= 0 or name.find('upsample') >= 0:
                         print('Replace pre-trained upsampler to new one...')
                     else:
                         raise RuntimeError('While copying the parameter named {}, '
