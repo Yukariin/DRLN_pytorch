@@ -123,8 +123,8 @@ class DRLN(nn.Module):
     def __init__(self, n_feats=64, scale=2):
         super().__init__()
 
-        self.sub_mean = ops.MeanShift((0.4488, 0.4371, 0.4040), sub=True)
-        self.add_mean = ops.MeanShift((0.4488, 0.4371, 0.4040), sub=False)
+        self.sub_mean = MeanShift((0.4488, 0.4371, 0.4040), sub=True)
+        self.add_mean = MeanShift((0.4488, 0.4371, 0.4040), sub=False)
 
         self.head = nn.Conv2d(3, n_feats, 3, 1, 1)
 
