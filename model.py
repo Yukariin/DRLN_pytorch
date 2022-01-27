@@ -5,6 +5,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class MeanShift(nn.Module):
+    def __init__(self, mean_rgb, sub):
+        super().__init__()
+
+        sign = -1 if sub else 1
+        r = mean_rgb[0] * sign
+        g = mean_rgb[1] * sign
+        b = mean_rgb[2] * sign
+
+        self.shifter = nn.Conv2d(3, 3, 1, 1, 0)
+        self.shifter.weight.data = torch.eye(3).view(3, 3, 1, 1)
+        self.shifter.bias.data   = torch.Tensor([r, g, b])
+
+        for params in self.shifter.parameters():
+            params.requires_grad = False
+
+    def forward(self, x):
+        x = self.shifter(x)
+        return x
+
+
 class BasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels,
                  ksize=3, stride=1, pad=1, dilation=1):
@@ -102,6 +123,9 @@ class DRLN(nn.Module):
     def __init__(self, n_feats=64, scale=2):
         super().__init__()
 
+        self.sub_mean = ops.MeanShift((0.4488, 0.4371, 0.4040), sub=True)
+        self.add_mean = ops.MeanShift((0.4488, 0.4371, 0.4040), sub=False)
+
         self.head = nn.Conv2d(3, n_feats, 3, 1, 1)
 
         self.b1 = Block(n_feats, n_feats)
@@ -159,6 +183,7 @@ class DRLN(nn.Module):
         self.tail = nn.Conv2d(n_feats, 3, 3, 1, 1)
 
     def forward(self, x):
+        x = self.sub_mean(x)
         x = self.head(x)
         c0 = o0 = x
 
@@ -252,6 +277,6 @@ class DRLN(nn.Module):
         out = self.upsample(b_out)
 
         out = self.tail(out)
-        f_out = out
+        f_out = self.add_mean(out)
 
         return f_out
